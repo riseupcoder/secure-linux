@@ -1,0 +1,11 @@
+(typeattribute userns_privileged_domain)
+
+(optional container_userns_privileged_domain
+    (typeattributeset userns_privileged_domain (container_domain container_runtime_domain spc_t))
+)
+
+(typeattribute userns_restricted_domain)
+(typeattributeset userns_restricted_domain (and (domain) (not (userns_privileged_domain))))
+
+(deny userns_restricted_domain self (user_namespace (create)))
+(deny userns_restricted_domain userns_privileged_domain (process (noatsecure)))

@@ -1,0 +1,247 @@
+environment {
+  GDK_BACKEND "wayland"
+  QT_QPA_PLATFORM "wayland;xcb"
+  SDL_VIDEODRIVER "wayland"
+  CLUTTER_BACKEND "wayland"
+
+  XDG_CURRENT_DESKTOP "niri"
+  XDG_SESSION_TYPE "wayland"
+  XDG_SESSION_DESKTOP "niri"
+
+
+  QT_AUTO_SCREEN_SCALE_FACTOR "1" 
+  QT_WAYLAND_DISABLE_WINDOWDECORATION "1" QT_QPA_PLATFORMTHEME "qt6ct"
+
+
+  MOZ_ENABLE_WAYLAND "1"
+  GDK_SCALE "1"
+  ELECTRON_OZONE_PLATFORM_HINT "auto"
+}
+
+overview {
+    zoom 0.3
+    workspace-shadow {
+        off
+    }
+    backdrop-color "#1d1d24"
+}
+
+input {
+    keyboard {
+        xkb {
+            layout "us"
+            options "caps:super"
+        }
+        repeat-delay 600
+        repeat-rate 25
+        numlock
+    }
+
+    mouse {
+        accel-speed 0.3
+    }
+
+    warp-mouse-to-focus
+    focus-follows-mouse max-scroll-amount="0%"
+}
+
+animations {
+    window-resize {
+        duration-ms 0
+        curve "linear"
+    }
+//   off
+}
+
+gestures {
+    hot-corners {
+       // off
+    }
+}
+
+xwayland-satellite {
+    off
+}
+
+layout {
+    background-color "transparent"
+    gaps 3
+    struts {
+        left 5
+        right 5
+        top 5
+        bottom 5
+    }
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    preset-window-heights {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+        proportion 1.0
+    }
+
+    default-column-width { proportion 1.0; }
+
+    border {
+        width 2
+        active-gradient from="#A9A7BEff" to="#2C2952ff" angle=45
+        inactive-gradient from="#1B1B29ff" to="#3A3A53ff" angle=45
+    }
+
+    focus-ring {
+        off
+    }
+}
+
+// spawn-at-startup ""
+
+prefer-no-csd
+
+window-rule {
+    geometry-corner-radius 10
+    clip-to-geometry true
+}
+
+screenshot-path null
+
+binds {
+    Mod+RETURN hotkey-overlay-title="Open a Terminal: " { spawn "foot"; }
+
+    Mod+Shift+B { spawn-sh "$HOME/.local/bin/mullvad-browser.sh"; }                            
+    Mod+Shift+U { spawn-sh "$HOME/.local/bin/mozilla-browser.sh"; }
+    Mod+t { spawn-sh "$HOME/.local/bin/tester.sh"; }
+    Mod+i { spawn-sh "$HOME/.local/bin/springboot.sh"; }
+
+    // Example volume keys mappings for PipeWire & WirePlumber.
+    // The allow-when-locked=true property makes them work even when the session is locked.
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "0.1-"; }
+    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--device=intel_backlight" "set" "+5%" ; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--device=intel_backlight" "set" "5%-" ; }
+
+    Mod+Tab repeat=false { toggle-overview; }
+
+    Mod+C { close-window; }
+
+    Mod+H     { focus-column-left; }
+    Mod+L     { focus-column-right; }
+
+    Mod+Shift+H     { move-column-left; }
+    Mod+Shift+L     { move-column-right; }
+    
+    // Alternative commands that move across workspaces when reaching
+    // the first or last window in a column.
+     Mod+J     { focus-window-or-workspace-down; }
+     Mod+K     { focus-window-or-workspace-up; }
+     Mod+Shift+J     { move-window-down-or-to-workspace-down; }
+     Mod+Shift+K     { move-window-up-or-to-workspace-up; }
+
+
+    Mod+Shift+Ctrl+J      { move-workspace-down; }
+    Mod+Shift+Ctrl+K      { move-workspace-up; }
+
+    // You can bind mouse wheel scroll ticks using the following syntax.
+    // These binds will change direction based on the natural-scroll setting.
+    //
+    // To avoid scrolling through workspaces really fast, you can use
+    // the cooldown-ms property. The bind will be rate-limited to this value.
+    // You can set a cooldown on any bind, but it's most useful for the wheel.
+    Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+
+    Mod+WheelScrollRight      { focus-column-right; }
+    Mod+WheelScrollLeft       { focus-column-left; }
+    Mod+Ctrl+WheelScrollRight { move-column-right; }
+    Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+
+    // Usually scrolling up and down with Shift in applications results in
+    // horizontal scrolling; these binds replicate that.
+    Mod+Shift+WheelScrollDown      { focus-column-right; }
+    Mod+Shift+WheelScrollUp        { focus-column-left; }
+    Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
+    Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
+
+
+   // Mod+1 { focus-workspace 1; }
+   // Mod+2 { focus-workspace 2; }
+   // Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    // Consume one window from the right to the bottom of the focused column.
+    Mod+Comma  { consume-window-into-column; }
+    // Expel the bottom window from the focused column to the right.
+    Mod+Period { expel-window-from-column; }
+
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { switch-preset-window-height; }
+    Mod+Ctrl+R { reset-window-height; }
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+
+    // Expand the focused column to space not taken up by other fully visible columns.
+    // Makes the column "fill the rest of the space".
+    Mod+Ctrl+F { expand-column-to-available-width; }
+    Mod+Shift+C { center-column; }
+    Mod+Ctrl+C { center-visible-columns; }
+
+    Mod+Alt+H { set-column-width "-10%"; }
+    Mod+Alt+L { set-column-width "+10%"; }
+    Mod+Alt+K { set-window-height "-10%"; }
+    Mod+Alt+J { set-window-height "+10%"; }
+
+    // Move the focused window between the floating and the tiling layout.
+    Mod+Space        { toggle-window-floating; }
+    Mod+Shift+Space { switch-focus-between-floating-and-tiling; }
+
+    // Toggle tabbed column display mode.
+    // Windows in this column will appear as vertical tabs,
+    // rather than stacked on top of each other.
+    Mod+W { toggle-column-tabbed-display; }
+
+
+    Mod+Shift+S { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Ctrl+Alt+Delete { quit; }
+    Mod+Shift+P { power-off-monitors; }
+}
+cursor {
+// xcursor-theme "breeze_cursors"
+  xcursor-size 24
+  hide-when-typing
+  hide-after-inactive-ms 1000
+}
+
+hotkey-overlay {
+  skip-at-startup
+}

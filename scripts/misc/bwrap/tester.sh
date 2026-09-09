@@ -1,0 +1,23 @@
+bwrap \
+    --unshare-all \
+    --share-net \
+    --new-session \
+    --die-with-parent \
+    --cap-drop all \
+    --ro-bind /usr /usr \
+    --ro-bind /lib64 /lib64 \
+    --ro-bind /etc /etc \
+    --proc /proc \
+    --dev /dev \
+    --bind "$HOME/tester" "$HOME" \
+    --ro-bind /usr/lib64/libwayland-client.so.0.24.0 /usr/lib64/libwayland-client.so.0.24.0 \
+    --setenv LD_PRELOAD /usr/lib64/libwayland-client.so.0.24.0 \
+    --ro-bind /usr/lib64/libhardened_malloc.so /usr/lib64/libhardened_malloc.so \
+    --setenv LD_PRELOAD /usr/lib64/libhardened_malloc.so \
+    --dev-bind /dev/dri/card1 /dev/dri/card1 \
+    --dev-bind /dev/dri/renderD128 /dev/dri/renderD128 \
+    --ro-bind /sys/dev/char /sys/dev/char \
+    --ro-bind /sys/devices/pci0000:00 /sys/devices/pci0000:00 \
+    --bind "$HOME/.yaak/" /app \
+    --chdir /app \
+    ./AppRun   

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+command="$1"
+kernel_version="$2"
+
+[[ "${KERNEL_INSTALL_LAYOUT:-}" == "uki" ]] || exit 0
+
+case "$command" in
+    add)
+        uki="${KERNEL_INSTALL_BOOT_ROOT}/EFI/Linux/${KERNEL_INSTALL_ENTRY_TOKEN}-${kernel_version}.efi"
+
+        [[ -f "$uki" ]] || exit 0
+
+        esp="$(findmnt -n -o SOURCE "$KERNEL_INSTALL_BOOT_ROOT")"
+        disk="$(lsblk -no PKNAME "$esp")"
+        part="$(lsblk -no PARTN "$esp")"
+
+        [[ -n "$disk" ]] || {
+            echo "Could not determine parent disk for ESP: $esp" >&2
+            exit 1
+        }
+
+        [[ -n "$part" ]] || {
+            echo "Could not determine partition number for ESP: $esp" >&2
+            exit 1
+        }
+
+        efibootmgr \
+            --create \
+            --disk "/dev/$disk" \
+            --part "$part" \
+            --label "Linux $kernel_version" \
+            --loader "\\EFI\\Linux\\${KERNEL_INSTALL_ENTRY_TOKEN}-${kernel_version}.efi"
+        ;;
+
+    remove)
+        exit 0
+        ;;
+
+    *)
+        exit 0
+        ;;
+esac
+

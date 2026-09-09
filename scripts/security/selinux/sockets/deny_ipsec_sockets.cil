@@ -1,0 +1,3 @@
+(in secure_linux
+    (call deny_userspace (key_socket))
+    (call deny_userspace (netlink_xfrm_socket)))

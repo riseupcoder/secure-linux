@@ -1,0 +1,7 @@
+;; It denies all userspace processes except bluetooth_t access to AF_ALG sockets 
+;; (call secure_linux.deny_non_bluetooth (alg_socket))
+
+;; if you don't use bluetooth keep this default it blocks all userspace process
+;; from accessing AF_ALG sockets
+(in secure_linux
+(call deny_userspace (alg_socket)))

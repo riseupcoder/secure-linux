@@ -1,0 +1,5 @@
+(in secure_linux
+    (call deny_userspace (ax25_socket))
+    (call deny_userspace (netrom_socket))
+    (call deny_userspace (rose_socket))
+    (call deny_userspace (x25_socket)))

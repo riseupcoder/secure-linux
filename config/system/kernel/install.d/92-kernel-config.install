@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+COMMAND="$1"
+KERNEL_VERSION="$2"
+
+CONFIG="/usr/lib/modules/$KERNEL_VERSION/config"
+BOOT_CONFIG="/boot/config-$KERNEL_VERSION"
+
+case "$COMMAND" in
+    add)
+        if [[ -f "$CONFIG" ]]; then
+            install -Dm644 "$CONFIG" "$BOOT_CONFIG"
+        fi
+        ;;
+
+    remove)
+        rm -f "$BOOT_CONFIG"
+        ;;
+
+    *)
+        exit 0
+        ;;
+esac

@@ -1,0 +1,26 @@
+bwrap \
+  --ro-bind /usr /usr \
+  --symlink usr/lib64 /lib64 \
+  --proc /proc \
+  --dev /dev \
+  --tmpfs /tmp \
+  --tmpfs /home/user/Downloads \
+  --bind "$HOME/.config/mozilla" /home/user/.config/mozilla \
+  --ro-bind /etc/resolv.conf /etc/resolv.conf \
+  --setenv HOME "/home/user" \
+  --setenv USER "user" \
+  --setenv XDG_RUNTIME_DIR "/run/user/$(id -u)" \
+  --setenv WAYLAND_DISPLAY "$WAYLAND_DISPLAY" \
+  --bind "$XDG_RUNTIME_DIR" "$XDG_RUNTIME_DIR" \
+  --dev-bind /dev/dri/card1 /dev/dri/card1 \
+  --dev-bind /dev/dri/renderD128 /dev/dri/renderD128 \
+  --ro-bind /sys/dev/char /sys/dev/char \
+  --ro-bind /sys/devices/pci0000:00 /sys/devices/pci0000:00 \
+  --ro-bind /sys/class/drm /sys/class/drm \
+  --ro-bind /dev/snd /dev/snd \
+  --unshare-all \
+  --cap-drop all \
+  --share-net \
+  --die-with-parent \
+  --new-session \
+  /usr/bin/firefox

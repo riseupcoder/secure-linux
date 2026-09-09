@@ -1,0 +1,17 @@
+(typeattribute userns_privileged_file_type)
+
+(optional container_userns_privileged_file_type
+    (typeattributeset userns_privileged_file_type (container_runtime_exec_t docker_exec_t kubelet_exec_t))
+)
+
+(typeattribute userns_relabel_allowed)
+
+(typeattribute userns_relabel_restricted)
+(typeattributeset userns_relabel_restricted (and (domain) (not (userns_relabel_allowed))))
+
+(deny userns_relabel_restricted userns_privileged_file_type (blk_file (relabelfrom relabelto)))
+(deny userns_relabel_restricted userns_privileged_file_type (chr_file (relabelfrom relabelto)))
+(deny userns_relabel_restricted userns_privileged_file_type (dir (relabelfrom relabelto)))
+(deny userns_relabel_restricted userns_privileged_file_type (fifo_file (relabelfrom relabelto)))
+(deny userns_relabel_restricted userns_privileged_file_type (file (relabelfrom relabelto)))
+(deny userns_relabel_restricted userns_privileged_file_type (lnk_file (relabelfrom relabelto)))
