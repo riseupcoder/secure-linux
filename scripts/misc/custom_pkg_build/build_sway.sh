@@ -40,7 +40,7 @@ remove_build_deps() {
         cairo-devel vulkan-loader-devel vulkan-headers glslang-devel
 }
 
-get_latest_wlroots_020() {
+get_latest_wlroots() {
     cd "$SRC/wlroots"
 
     git fetch --tags --force
@@ -71,7 +71,7 @@ build_wlroots() {
 
     cd wlroots
 
-    get_latest_wlroots_020
+    get_latest_wlroots
 
     echo "Building wlroots $WLROOTS_VERSION"
 

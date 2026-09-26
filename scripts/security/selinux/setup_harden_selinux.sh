@@ -3,14 +3,13 @@
 set -euo pipefail
 
 source "$CONFIG_DIR/system/selinux/sebool.conf"
-
 readonly SELINUX_DIR="$SCRIPTS_DIR/security/selinux"
 
 harden_userns() {
     info "Installing harden userns SELinux policy"
 
-    doas semodule -i "$SELINUX_DIR/harden_userns/harden_userns.cil"
-    doas semodule -i "$SELINUX_DIR/harden_userns/userns_deny_unconfined_relabels.cil"
+    install_selinux_cil "$SELINUX_DIR/harden_userns/harden_userns.cil"
+    install_selinux_cil "$SELINUX_DIR/harden_userns/userns_deny_unconfined_relabels.cil"
 }
 
 deny_sockets() {
@@ -25,8 +24,7 @@ deny_sockets() {
     info "Installing socket SELinux policies"
 
     for module in "${modules[@]}"; do
-        info "Installing $(basename "$module")"
-        doas semodule -i "$module"
+        install_selinux_cil "$module"
     done
 }
 

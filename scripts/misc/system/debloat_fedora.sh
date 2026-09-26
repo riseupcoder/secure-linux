@@ -9,12 +9,14 @@ debloat_fedora() {
 
     remove_packages "${REMOVE_PACKAGES[@]}"
 
+    doas dnf autoremove -y
+
     doas systemctl mask dnf-makecache.timer
     doas systemctl mask dnf-makecache.service
     doas systemctl mask NetworkManager-wait-online.service
 
     doas systemctl restart NetworkManager
-    sleep 8
+    sleep 5
 
     success "Fedora debloat complete"
 }

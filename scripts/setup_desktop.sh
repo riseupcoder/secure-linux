@@ -3,9 +3,6 @@
 set -euo pipefail
 
 source "$CONFIG_DIR/packages/$DISTRO/desktop.conf"
-source "$CONFIG_DIR/packages/$DISTRO/dwl.conf"
-
-readonly DWL_REPO="https://codeberg.org/dwl/dwl.git"
 
 install_desktop_packages() {
     info "Installing desktop packages"
@@ -19,37 +16,49 @@ install_desktop_packages() {
     success "Desktop packages configured"
 }
 
+install_font() {
+    local font_dir="$HOME/.local/share/fonts"
+    local tmp_dir archive url digest
+    
+    install_packages unzip
 
-setup_dwl() {
-    info "Setting up dwl"
+    mkdir -p "$font_dir"
 
-    create_temp_directory
+    tmp_dir=$(mktemp -d)
+    trap 'rm -rf "$tmp_dir"' RETURN
 
-    install_packages "${DWL_BUILD_PACKAGES[@]}"
-
-    info "Cloning dwl from $DWL_REPO"
-
-    git clone "$DWL_REPO" "$TEMP_DIR/dwl"
-
-    (
-        cd "$TEMP_DIR/dwl"
-        cp "$CONFIG_DIR/desktop/wm/dwl/config.def.h" .
-
-        vi dwl.c
-
-        make clean
-        doas make install
+    read -r url digest < <(
+        curl -fsSL --retry 3 \
+            https://api.github.com/repos/googlefonts/googlesans-code/releases/latest |
+            jq -er '
+                .assets[]
+                | select(.name | test("^GoogleSansCode-v[0-9.]+\\.zip$"))
+                | [.browser_download_url, .digest]
+                | @tsv
+            '
     )
 
-    remove_packages "${DWL_BUILD_PACKAGES[@]}"
+    archive="$tmp_dir/archive.zip"
 
-    install_packages "${DWL_RUNTIME_PACKAGES[@]}"
+    curl -fsSL --retry 3 -o "$archive" "$url"
 
-    success "dwl installed"
+    printf '%s  %s\n' "${digest#sha256:}" "$archive" |
+        sha256sum -c -
+
+    unzip -jo "$archive" '*.ttf' -d "$tmp_dir" >/dev/null
+
+    install -Dm644 "$tmp_dir/GoogleSansCode[MONO,wght].ttf" \
+        "$font_dir/google_sans_code.ttf"
+
+    chmod 400 "$font_dir/google_sans_code.ttf"
+
+    restorecon -Rv -F "$font_dir"
+
+    fc-cache -f "$font_dir"
 }
 
 setup_desktop() {
     install_desktop_packages
-#    setup_dwl
+    install_font
     success "Desktop setup completed"
 }
