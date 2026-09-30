@@ -59,7 +59,7 @@ setup_unprivileged_user() {
 confine_all_users() {
   doas semanage login -m -s user_u __default__
   doas semanage login -m -s sysadm_u root
-  doas setsebool -P unconfined_logging off
+  doas setsebool -P unconfined_login off
 }
 
 cleanup() {
