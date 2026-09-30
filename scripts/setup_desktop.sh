@@ -24,8 +24,7 @@ install_font() {
 
     mkdir -p "$font_dir"
 
-    tmp_dir=$(mktemp -d)
-    trap 'rm -rf "$tmp_dir"' RETURN
+    create_temp_directory
 
     read -r url digest < <(
         curl -fsSL --retry 3 \
@@ -38,16 +37,16 @@ install_font() {
             '
     )
 
-    archive="$tmp_dir/archive.zip"
+    archive="$TEMP_DIR/archive.zip"
 
     curl -fsSL --retry 3 -o "$archive" "$url"
 
     printf '%s  %s\n' "${digest#sha256:}" "$archive" |
         sha256sum -c -
 
-    unzip -jo "$archive" '*.ttf' -d "$tmp_dir" >/dev/null
+    unzip -jo "$archive" '*.ttf' -d "$TEMP_DIR" >/dev/null
 
-    install -Dm644 "$tmp_dir/GoogleSansCode[MONO,wght].ttf" \
+    install -Dm644 "$TEMP_DIR/GoogleSansCode[MONO,wght].ttf" \
         "$font_dir/google_sans_code.ttf"
 
     chmod 400 "$font_dir/google_sans_code.ttf"
@@ -55,6 +54,8 @@ install_font() {
     restorecon -Rv -F "$font_dir"
 
     fc-cache -f "$font_dir"
+
+    remove_temp_directory
 }
 
 setup_desktop() {

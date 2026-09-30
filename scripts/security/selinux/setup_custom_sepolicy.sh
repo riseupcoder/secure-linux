@@ -6,6 +6,8 @@ readonly SEPOLICY_REPO="https://github.com/riseupcoder/selinux-policy"
 
 setup_custom_sepolicy() {
 
+  install_packages git selinux-policy-devel
+
   create_temp_directory
 
   git clone "$SEPOLICY_REPO" "$TEMP_DIR/selinux-policy"

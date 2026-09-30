@@ -10,7 +10,7 @@ build_dwl() {
 
     create_temp_directory
 
-    install_packages "${DWL_BUILD_PACKAGES[@]}"
+    install_packages "${DWL_BUILD_PACKAGES[@]}" git
 
     info "Cloning dwl from $DWL_REPO"
 

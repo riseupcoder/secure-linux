@@ -52,6 +52,7 @@ install_selinux_policy() {
 
     install_selinux_module "$selinux_dir/${policy_name}.pp"
 
-    remove_directory "$TEMP_DIR"
+    # remove_temp_directory "$TEMP_DIR"
+    remove_temp_directory
 }
 

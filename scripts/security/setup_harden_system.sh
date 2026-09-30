@@ -12,7 +12,7 @@ install_hardened_malloc() {
 
     create_temp_directory
 
-    install_packages "${HARDENED_MALLOC_BUILD_PACKAGES[@]}"
+    install_packages "${HARDENED_MALLOC_BUILD_PACKAGES[@]}" git
 
     info "Cloning hardened malloc from $HARDENED_MALLOC_REPO"
 

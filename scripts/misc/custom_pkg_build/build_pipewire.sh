@@ -10,7 +10,7 @@ readonly WP_REPO="https://gitlab.freedesktop.org/pipewire/wireplumber.git"
 build_pipewire() {
 
   # Install PipeWire build dependencies
-  install_packages "${PW_BUILD_PACKAGES[@]}"
+  install_packages "${PW_BUILD_PACKAGES[@]}" git pkgconf-pkg-config libudev-devel
 
   create_temp_directory
 
@@ -33,7 +33,7 @@ build_pipewire() {
       -Dpipewire-alsa=disabled \
       -Dpipewire-jack=disabled \
       -Dpipewire-v4l2=disabled \
-      -Dsession-managers=disabled \
+      -Dsession-managers=wireplumber \
       -Dgstreamer=disabled \
       -Dffmpeg=disabled \
       -Dbluez5=disabled \
@@ -115,7 +115,7 @@ build_pipewire() {
   )
 
   # Remove build dependencies
-  remove_packages "${PW_BUILD_REMOVE_PACKAGES[@]}"
+  remove_packages "${PW_BUILD_PACKAGES[@]}"
 
   # Install PipeWire/WirePlumber runtime dependencies
   install_packages "${PW_RUNTIME_PACKAGES[@]}"

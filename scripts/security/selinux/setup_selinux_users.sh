@@ -23,6 +23,8 @@ setup_selinux_users() {
     setup_admin_user
     setup_unprivileged_user
 
+    confine_all_users
+
     cleanup
 
     success "SELinux users configured"
@@ -52,6 +54,12 @@ setup_unprivileged_user() {
     info "Mapping current user to staff_u"
 
     doas semanage login -a -s user_u "$CURRENT_USER"
+}
+
+confine_all_users() {
+  doas semanage login -m -s user_u __default__
+  doas semanage login -m -s sysadm_u root
+  doas setsebool -P unconfined_logging off
 }
 
 cleanup() {

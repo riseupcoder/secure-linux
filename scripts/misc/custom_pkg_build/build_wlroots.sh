@@ -8,7 +8,7 @@ readonly WLR_REPO="https://gitlab.freedesktop.org/wlroots/wlroots.git"
 build_wlroots() {
 
   # Install wlroots build deps
-  install_packages "${WLR_BUILD_PACKAGES[@]}"
+  install_packages "${WLR_BUILD_PACKAGES[@]}" git
 
   create_temp_directory
 
