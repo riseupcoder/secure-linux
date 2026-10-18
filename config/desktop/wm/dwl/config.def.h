@@ -57,8 +57,8 @@ static const struct xkb_rule_names xkb_rules = {
 	.options = NULL,
 };
 
-static const int repeat_rate = 35;
-static const int repeat_delay = 250;
+static const int repeat_rate = 45;
+static const int repeat_delay = 200;
 
 /* Trackpad */
 static const int tap_to_click = 1;
@@ -94,7 +94,10 @@ static const uint32_t send_events_mode = LIBINPUT_CONFIG_SEND_EVENTS_ENABLED;
 LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT
 LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE
 */
+/*
 static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_ACCEL_PROFILE_ADAPTIVE;
+*/
+static const enum libinput_config_accel_profile accel_profile = LIBINPUT_CONFIG_ACCEL_PROFILE_FLAT;
 static const double accel_speed = 0.0;
 
 /* You can choose between:
@@ -121,11 +124,7 @@ static const char *termcmd[] = { "foot", NULL };
 static const Key keys[] = {
 	/* modifier                  key                  function          argument */
 	{ MODKEY,                    XKB_KEY_Return,      spawn,            SHCMD("foot") },
-        { MODKEY,                    XKB_KEY_u,           spawn, SHCMD("$HOME/.local/bin/chromium.sh") },
-        { MODKEY,                    XKB_KEY_b,           spawn, SHCMD("$HOME/.local/bin/mullvad-browser.sh") },
-        { MODKEY,                    XKB_KEY_e,           spawn, SHCMD("$HOME/.local/bin/foliate.sh") },
-        { MODKEY,                    XKB_KEY_i,           spawn, SHCMD("$HOME/.local/bin/idea.sh") },
-        { MODKEY,                    XKB_KEY_t,           spawn, SHCMD("$HOME/.local/bin/tester.sh") },
+        { MODKEY,                    XKB_KEY_d,           spawn, SHCMD("$HOME/.local/bin/fuzzel.sh") },
 	{ MODKEY,                    XKB_KEY_h,           focusstack,       {.i = +1} },
 	{ MODKEY,                    XKB_KEY_l,           focusstack,       {.i = -1} },
 	{ MODKEY|WLR_MODIFIER_SHIFT, XKB_KEY_h,           incnmaster,       {.i = +1} },
