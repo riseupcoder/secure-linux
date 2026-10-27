@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/pipewire.conf"
+source "$CONFIG_DIR/packages/$DISTRO/desktop/pipewire.conf"
 
 readonly PW_REPO="https://gitlab.freedesktop.org/pipewire/pipewire.git"
 readonly WP_REPO="https://gitlab.freedesktop.org/pipewire/wireplumber.git"

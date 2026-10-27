@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/dwl.conf"
+source "$CONFIG_DIR/packages/$DISTRO/desktop/dwl.conf"
 readonly DWL_REPO="https://codeberg.org/dwl/dwl.git"
 
 build_dwl() {

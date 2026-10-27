@@ -1,11 +1,23 @@
 (typeattribute userns_privileged_domain)
 
+(typeattributeset userns_privileged_domain (init_t install_t kernel_t))
+
 (optional container_userns_privileged_domain
-    (typeattributeset userns_privileged_domain (container_domain container_runtime_domain spc_t))
+    (typeattributeset userns_privileged_domain (container_domain container_runtime_domain))
 )
+
+(optional passt_userns_privileged_domain
+          (typeattributeset userns_privileged_domain (passt_t)))
 
 (typeattribute userns_restricted_domain)
 (typeattributeset userns_restricted_domain (and (domain) (not (userns_privileged_domain))))
 
+(typeattribute container_userns_join_permitted_domain)
+(typeattributeset container_userns_join_permitted_domain (pasta_t mount_t))
+
+(typeattribute userns_restricted_join_domain)
+(typeattributeset userns_restricted_join_domain (and (userns_restricted_domain) (not (container_userns_join_permitted_domain))))
+
 (deny userns_restricted_domain self (user_namespace (create)))
 (deny userns_restricted_domain userns_privileged_domain (process (noatsecure)))
+(deny userns_restricted_join_domain self (cap_userns (sys_admin)))

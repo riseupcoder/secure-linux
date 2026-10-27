@@ -8,10 +8,8 @@ environment {
   XDG_SESSION_TYPE "wayland"
   XDG_SESSION_DESKTOP "niri"
 
-
   QT_AUTO_SCREEN_SCALE_FACTOR "1" 
   QT_WAYLAND_DISABLE_WINDOWDECORATION "1" QT_QPA_PLATFORMTHEME "qt6ct"
-
 
   MOZ_ENABLE_WAYLAND "1"
   GDK_SCALE "1"
@@ -114,10 +112,7 @@ screenshot-path null
 binds {
     Mod+RETURN hotkey-overlay-title="Open a Terminal: " { spawn "foot"; }
 
-    Mod+Shift+B { spawn-sh "$HOME/.local/bin/mullvad-browser.sh"; }                            
-    Mod+Shift+U { spawn-sh "$HOME/.local/bin/mozilla-browser.sh"; }
-    Mod+t { spawn-sh "$HOME/.local/bin/tester.sh"; }
-    Mod+i { spawn-sh "$HOME/.local/bin/springboot.sh"; }
+    Mod+d { spawn-sh "$HOME/.local/bin/fuzzel.sh"; }                            
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -226,7 +221,6 @@ binds {
     // Windows in this column will appear as vertical tabs,
     // rather than stacked on top of each other.
     Mod+W { toggle-column-tabbed-display; }
-
 
     Mod+Shift+S { screenshot; }
     Ctrl+Print { screenshot-screen; }

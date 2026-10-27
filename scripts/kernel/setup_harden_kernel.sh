@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/kernel.conf"
+source "$CONFIG_DIR/packages/$DISTRO/kernel/kernel.conf"
 source "$CONFIG_DIR/system/kernel/kernel.conf"
 source "$CONFIG_DIR/system/kernel/modules.conf"
 

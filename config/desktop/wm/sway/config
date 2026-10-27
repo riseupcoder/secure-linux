@@ -260,15 +260,7 @@ bindsym $mod+period workspace next
 
 bindsym $mod+comma workspace back_and_forth
 
-bindsym $mod+Shift+B exec "$HOME/.local/bin/mullvad-browser.sh"
-
-bindsym $mod+u exec "$HOME/.local/bin/chromium.sh"
-
-bindsym $mod+Shift+t exec "$HOME/.local/bin/tester.sh"
-
-bindsym $mod+i exec "$HOME/.local/bin/idea.sh"
-
-bindsym $mod+e exec "$HOME/.local/bin/foliate.sh"
+bindsym $mod+d exec "$HOME/.local/bin/fuzzel.sh"
 
 include /etc/sway/config.d/*
 

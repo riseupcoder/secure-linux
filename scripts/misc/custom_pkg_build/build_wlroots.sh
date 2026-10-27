@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/wlroots.conf"
+source "$CONFIG_DIR/packages/$DISTRO/desktop/wlroots.conf"
 readonly WLR_REPO="https://gitlab.freedesktop.org/wlroots/wlroots.git"
 
 build_wlroots() {

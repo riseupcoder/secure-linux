@@ -20,4 +20,7 @@
     (call deny_userspace (rxrpc_socket))
     (call deny_userspace (sctp_socket))
     (call deny_userspace (smc_socket))
-    (call deny_userspace (tipc_socket)))
+    (call deny_userspace (tipc_socket))
+    (call deny_userspace (phonet_socket))
+    (call deny_userspace (qipcrtr_socket))
+    (call deny_userspace (xdp_socket)))

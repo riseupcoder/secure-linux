@@ -49,7 +49,7 @@ setup_admin_user() {
 }
 
 setup_unprivileged_user() {
-    info "Mapping current user to staff_u"
+    info "Mapping current user to user_u"
 
     doas semanage login -a -s user_u "$CURRENT_USER"
 }

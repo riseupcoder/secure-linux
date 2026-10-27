@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/uki.conf"
+source "$CONFIG_DIR/packages/$DISTRO/boot/uki.conf"
 
 configure_uki() {
     info "Installing UKI packages"

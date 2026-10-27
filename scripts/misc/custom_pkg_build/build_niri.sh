@@ -1,34 +1,54 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+source "$CONFIG_DIR/packages/$DISTRO/desktop/niri.conf"
+
+readonly NIRI_REPO="https://github.com/niri-wm/niri.git"
+
 niri_setup() {
-  doas dnf install -y gcc libudev-devel libgbm-devel libxkbcommon-devel wayland-devel libinput-devel dbus-devel systemd-devel libseat-devel pipewire-devel pango-devel cairo-gobject-devel clang libdisplay-info-devel git
+    info "Setting up niri"
 
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    create_temp_directory
 
-  source "$HOME/.cargo/env"
+    install_packages "${NIRI_BUILD_PACKAGES[@]}" git curl
 
+    info "Installing Rust toolchain"
 
-  git clone https://github.com/niri-wm/niri
-  cd niri/
+    if ! command -v cargo >/dev/null 2>&1; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    fi
 
-  cargo build --release --no-default-features 
+    source "$HOME/.cargo/env"
 
-  # 1. Install the binaries
-  doas cp target/release/niri /usr/local/bin/
-  doas cp resources/niri-session /usr/local/bin/
-  doas chmod +x /usr/local/bin/niri-session
+    info "Cloning niri from $NIRI_REPO"
 
-  doas mkdir -p /usr/local/share/wayland-sessions/
-  doas cp resources/niri.desktop /usr/local/share/wayland-sessions/
+    git clone "$NIRI_REPO" "$TEMP_DIR/niri"
 
-  # Remove devel deps
-  doas dnf remove -y gcc libudev-devel libgbm-devel libxkbcommon-devel wayland-devel libinput-devel dbus-devel systemd-devel libseat-devel pipewire-devel pango-devel cairo-gobject-devel clang libdisplay-info-devel git
+    (
+        cd "$TEMP_DIR/niri"
 
-  # Install runtime deps
-  doas dnf install -y libgudev libgbm libxkbcommon libwayland-server libinput libseat pango cairo-gobject libdisplay-info mesa-libEGL mesa-libgbm
+        cargo build --release --no-default-features
 
+        info "Installing niri binaries"
+
+        doas install -Dm755 target/release/niri /usr/local/bin/niri
+        doas install -Dm755 resources/niri-session /usr/local/bin/niri-session
+
+        doas install -Dm644 resources/niri.desktop \
+            /usr/local/share/wayland-sessions/niri.desktop
+    )
+
+    remove_packages "${NIRI_BUILD_PACKAGES[@]}"
+
+    install_packages "${NIRI_RUNTIME_PACKAGES[@]}"
+
+    success "niri installed"
 }
 
-remove_packages() {
-  doas dnf remove libgudev libgbm libxkbcommon libwayland-server libinput libseat pango cairo-gobject libdisplay-info mesa-libEGL mesa-libgbm
+remove_niri() {
+    info "Removing niri runtime packages"
+
+    remove_packages "${NIRI_RUNTIME_PACKAGES[@]}"
 }
 
-remove_packages

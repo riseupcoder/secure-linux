@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/hardened_malloc.conf"
+source "$CONFIG_DIR/packages/$DISTRO/security/hardened_malloc.conf"
 
 readonly HARDENED_MALLOC_REPO="https://github.com/GrapheneOS/hardened_malloc"
 readonly HOSTS_BLOCKLIST_URL="https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts"
@@ -138,5 +138,3 @@ setup_harden_system() {
 
     success "System hardening complete"
 }
-
-

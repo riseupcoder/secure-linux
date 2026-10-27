@@ -4,7 +4,14 @@
     (typeattributeset userns_privileged_file_type (container_runtime_exec_t docker_exec_t kubelet_exec_t))
 )
 
+(optional passt_userns_privileged_file_type
+          (typeattributeset userns_privileged_file_type (passt_exec_t)))
+
 (typeattribute userns_relabel_allowed)
+(typeattributeset userns_relabel_allowed (init_t kernel_t))
+(optional install_userns_relabel_allowed
+    (typeattributeset userns_privileged_file_type (install_exec_t))
+    (typeattributeset userns_relabel_allowed (install_t)))
 
 (typeattribute userns_relabel_restricted)
 (typeattributeset userns_relabel_restricted (and (domain) (not (userns_relabel_allowed))))

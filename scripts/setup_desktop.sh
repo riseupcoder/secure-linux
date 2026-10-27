@@ -55,6 +55,8 @@ install_font() {
 
     fc-cache -f "$font_dir"
 
+    remove_packages unzip
+
     remove_temp_directory
 }
 
