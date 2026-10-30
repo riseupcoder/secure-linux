@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-source "$CONFIG_DIR/packages/$DISTRO/desktop.conf"
+source "$CONFIG_DIR/packages/$DISTRO/desktop/desktop.conf"
 
 install_desktop_packages() {
     info "Installing desktop packages"
