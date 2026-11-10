@@ -50,6 +50,8 @@ build_sway() {
         doas ldconfig
     )
 
+    remove_temp_directory
+
     remove_packages "${SWAY_BUILD_PACKAGES[@]}"
 
     install_packages "${SWAY_RUNTIME_PACKAGES[@]}"

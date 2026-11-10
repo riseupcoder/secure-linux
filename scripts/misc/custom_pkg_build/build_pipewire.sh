@@ -114,6 +114,8 @@ build_pipewire() {
     doas ninja -C build install
   )
 
+  remove_temp_directory
+
   # Remove build dependencies
   remove_packages "${PW_BUILD_PACKAGES[@]}"
 

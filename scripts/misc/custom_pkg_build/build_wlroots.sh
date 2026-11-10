@@ -42,6 +42,8 @@ build_wlroots() {
       doas ninja -C build install
   )
 
+  remove_temp_directory
+
   # Remove wlroots build deps
   remove_packages "${WLR_BUILD_PACKAGES[@]}"
 

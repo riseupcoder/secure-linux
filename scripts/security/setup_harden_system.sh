@@ -5,7 +5,7 @@ set -euo pipefail
 source "$CONFIG_DIR/packages/$DISTRO/security/hardened_malloc.conf"
 
 readonly HARDENED_MALLOC_REPO="https://github.com/GrapheneOS/hardened_malloc"
-readonly HOSTS_BLOCKLIST_URL="https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/fakenews-gambling-porn/hosts"
+readonly HAGEZI_BLOCKLIST_URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/dnsmasq/ultimate.txt"
 
 install_hardened_malloc() {
     info "Installing hardened malloc"
@@ -25,6 +25,8 @@ install_hardened_malloc() {
 
         doas install -m 755 out/libhardened_malloc.so /usr/lib64/
     )
+   
+    remove_temp_directory
 
     echo "/usr/lib64/libhardened_malloc.so" | doas tee /etc/ld.so.preload >/dev/null
     doas chmod 444 /etc/ld.so.preload
@@ -36,8 +38,6 @@ install_hardened_malloc() {
 
     success "hardened malloc installed"
 }
-
-#!/usr/bin/env bash
 
 setup_account_hardening() {
     info "Hardening user accounts"
@@ -104,9 +104,6 @@ setup_system_configuration() {
 
     echo "localhost" |
         doas tee /etc/hostname >/dev/null
-
-    curl -fsSL --tlsv1.3 "$HOSTS_BLOCKLIST_URL" |
-        doas tee -a /etc/hosts >/dev/null
 }
 
 setup_networkmanager_hardening() {
@@ -122,8 +119,39 @@ setup_networkmanager_hardening() {
         "$CONFIG_DIR/system/systemd/NetworkManager/40-killmode.conf" \
         /etc/systemd/system/NetworkManager.service.d/40-killmode.conf
 
+    setup_hagezi_blocklist
+
     doas systemctl daemon-reload
     doas systemctl restart NetworkManager
+}
+
+setup_hagezi_blocklist() {
+    info "Setting up HaGeZi DNS blocklist"
+
+    install_packages dnsmasq curl
+
+    create_temp_directory
+
+    curl -fsSL --retry 3 "$HAGEZI_BLOCKLIST_URL" \
+        -o "$TEMP_DIR/99-hagezi-ultimate.conf"
+
+    [[ -s "$TEMP_DIR/99-hagezi-ultimate.conf" ]] || {
+        echo "ERROR: HaGeZi blocklist download is empty" >&2
+        return 1
+    }
+
+    doas install -Dm644 /dev/stdin \
+        /etc/NetworkManager/conf.d/00-use-dnsmasq.conf <<'EOF'
+[main]
+dns=dnsmasq
+EOF
+
+    doas install -Dm644 "$TEMP_DIR/99-hagezi-ultimate.conf" \
+        /etc/NetworkManager/dnsmasq.d/99-hagezi-ultimate.conf
+
+    remove_temp_directory
+
+    success "HaGeZi DNS blocklist configured"
 }
 
 setup_harden_system() {

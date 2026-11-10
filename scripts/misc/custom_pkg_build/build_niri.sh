@@ -39,6 +39,8 @@ niri_setup() {
             /usr/local/share/wayland-sessions/niri.desktop
     )
 
+    remove_temp_directory
+
     remove_packages "${NIRI_BUILD_PACKAGES[@]}"
 
     install_packages "${NIRI_RUNTIME_PACKAGES[@]}"

@@ -147,7 +147,6 @@ install_kernel() {
 
 setup_harden_kernel() {
     create_temp_directory
-    trap remove_temp_directory EXIT
 
     install_packages "${KERNEL_BUILD_PACKAGES[@]}" git
 
@@ -165,6 +164,8 @@ setup_harden_kernel() {
     cd "$ROOT_DIR"
 
     remove_packages "${KERNEL_BUILD_PACKAGES[@]}"
+
+    remove_temp_directory
 
     success "Hardened kernel installed: $KERNEL_RELEASE"
 }

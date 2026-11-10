@@ -25,5 +25,7 @@ setup_custom_sepolicy() {
       install_selinux_policy user_dwl dwl
   )
 
+  remove_temp_directory
+
   success "Custom selinux policy installed"
 }

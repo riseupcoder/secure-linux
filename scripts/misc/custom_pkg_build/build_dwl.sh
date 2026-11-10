@@ -29,6 +29,8 @@ build_dwl() {
         doas make install
     )
 
+    remove_temp_directory
+
     remove_packages "${DWL_BUILD_PACKAGES[@]}"
 
     install_packages "${DWL_RUNTIME_PACKAGES[@]}"
