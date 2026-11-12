@@ -22,7 +22,6 @@ readonly SETUP_SCRIPTS=(
     "scripts/misc/custom_pkg_build/build_wlroots.sh:build_wlroots"
     "scripts/misc/custom_pkg_build/build_pipewire.sh:build_pipewire"
     "scripts/setup_desktop.sh:setup_desktop"
-    "scripts/security/geoblock/setup_geoblock.sh:setup_geoblock"
     "scripts/security/selinux/setup_harden_selinux.sh:setup_harden_selinux"
     "scripts/security/selinux/setup_custom_sepolicy.sh:setup_custom_sepolicy"
     "scripts/security/selinux/setup_selinux_users.sh:setup_selinux_users"
