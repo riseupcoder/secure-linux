@@ -5,7 +5,6 @@ set -euo pipefail
 source "$CONFIG_DIR/packages/$DISTRO/security/hardened_malloc.conf"
 
 readonly HARDENED_MALLOC_REPO="https://github.com/GrapheneOS/hardened_malloc"
-readonly HAGEZI_BLOCKLIST_URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/dnsmasq/ultimate.txt"
 
 install_hardened_malloc() {
     info "Installing hardened malloc"
@@ -25,7 +24,7 @@ install_hardened_malloc() {
 
         doas install -m 755 out/libhardened_malloc.so /usr/lib64/
     )
-   
+
     remove_temp_directory
 
     echo "/usr/lib64/libhardened_malloc.so" | doas tee /etc/ld.so.preload >/dev/null
@@ -106,6 +105,71 @@ setup_system_configuration() {
         doas tee /etc/hostname >/dev/null
 }
 
+setup_hagezi_blocklist() {
+    info "Setting up HaGeZi DNS blocklists"
+
+    install_packages dnsmasq curl
+
+    # Configure NetworkManager to use dnsmasq
+    doas install -Dm644 /dev/stdin \
+        /etc/NetworkManager/conf.d/00-use-dnsmasq.conf <<'EOF'
+[main]
+dns=dnsmasq
+EOF
+
+    doas install -d -m 755 /etc/NetworkManager/dnsmasq.d
+
+    # Install independent updater
+    doas install -Dm755 -C \
+        "$LIBEXEC_DIR/security/hagezi-update" \
+        /usr/local/libexec/hagezi-update
+
+    # Install systemd units
+    doas install -Dm644 -C \
+        "$CONFIG_DIR/system/systemd/hagezi/hagezi-update.service" \
+        /etc/systemd/system/hagezi-update.service
+
+    doas install -Dm644 -C \
+        "$CONFIG_DIR/system/systemd/hagezi/hagezi-update.timer" \
+        /etc/systemd/system/hagezi-update.timer
+
+    # Activate updater and schedule future updates
+    doas systemctl daemon-reload
+    doas systemctl start hagezi-update.service
+    doas systemctl enable --now hagezi-update.timer
+
+    success "HaGeZi DNS blocklists configured"
+}
+
+setup_geoblock() {
+    info "Setting up GeoBlock"
+
+    doas install -Dm755 -C \
+        "$LIBEXEC_DIR/security/geoblock-update" \
+        /usr/local/libexec/geoblock-update
+
+    doas install -Dm644 -C \
+        "$CONFIG_DIR/system/systemd/geoblock/geoblock-load.service" \
+        /etc/systemd/system/geoblock-load.service
+
+    doas install -Dm644 -C \
+        "$CONFIG_DIR/system/systemd/geoblock/geoblock-update.service" \
+        /etc/systemd/system/geoblock-update.service
+
+    doas install -Dm644 -C \
+        "$CONFIG_DIR/system/systemd/geoblock/geoblock-update.timer" \
+        /etc/systemd/system/geoblock-update.timer
+
+    # Load the initial ruleset before enabling boot loading.
+    doas systemctl daemon-reload
+    doas systemctl start geoblock-update.service
+
+    doas systemctl enable geoblock-load.service
+    doas systemctl enable --now geoblock-update.timer
+
+    success "GeoBlock configured"
+}
+
 setup_networkmanager_hardening() {
     [[ "$(cat /proc/1/comm)" == "systemd" ]] || return 0
 
@@ -121,37 +185,18 @@ setup_networkmanager_hardening() {
 
     setup_hagezi_blocklist
 
+    # Reload newly installed systemd units
     doas systemctl daemon-reload
+
+    # Perform initial download before enabling periodic updates
+    doas systemctl start hagezi-update.service
+
+    doas systemctl enable --now hagezi-update.timer
+
+    # Apply NetworkManager configuration
     doas systemctl restart NetworkManager
-}
 
-setup_hagezi_blocklist() {
-    info "Setting up HaGeZi DNS blocklist"
-
-    install_packages dnsmasq curl
-
-    create_temp_directory
-
-    curl -fsSL --retry 3 "$HAGEZI_BLOCKLIST_URL" \
-        -o "$TEMP_DIR/99-hagezi-ultimate.conf"
-
-    [[ -s "$TEMP_DIR/99-hagezi-ultimate.conf" ]] || {
-        echo "ERROR: HaGeZi blocklist download is empty" >&2
-        return 1
-    }
-
-    doas install -Dm644 /dev/stdin \
-        /etc/NetworkManager/conf.d/00-use-dnsmasq.conf <<'EOF'
-[main]
-dns=dnsmasq
-EOF
-
-    doas install -Dm644 "$TEMP_DIR/99-hagezi-ultimate.conf" \
-        /etc/NetworkManager/dnsmasq.d/99-hagezi-ultimate.conf
-
-    remove_temp_directory
-
-    success "HaGeZi DNS blocklist configured"
+    success "NetworkManager hardened"
 }
 
 setup_harden_system() {
@@ -161,8 +206,10 @@ setup_harden_system() {
     setup_kernel_hardening
     setup_system_configuration
     setup_networkmanager_hardening
+    setup_geoblock
 
     install_hardened_malloc
 
     success "System hardening complete"
 }
+

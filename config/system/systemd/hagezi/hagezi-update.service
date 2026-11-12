@@ -1,0 +1,53 @@
+[Unit]
+Description=Update HaGeZi DNS blocklists
+Wants=network-online.target NetworkManager.service
+After=network-online.target NetworkManager.service
+
+ConditionPathIsDirectory=/etc/NetworkManager/dnsmasq.d
+
+[Service]
+Type=oneshot
+User=root
+
+ExecStart=/usr/local/libexec/hagezi-update
+
+TimeoutStartSec=10min
+
+# Privilege restrictions
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Filesystem restrictions
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/NetworkManager/dnsmasq.d
+
+# Device and IPC restrictions
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+
+# Kernel restrictions
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+
+# Process restrictions
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+# Network restrictions
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Additional restrictions
+KeyringMode=private
+UMask=0077

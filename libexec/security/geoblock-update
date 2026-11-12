@@ -1,0 +1,305 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly COUNTRIES=(ru cn kp pk ir iq tr vn ng)
+readonly GEO_BLOCKLIST_URL="https://raw.githubusercontent.com/ipverse/geo-ip-blocks/master/country"
+
+readonly NFT_DIR="/etc/nftables"
+readonly NFT_FILE="$NFT_DIR/geoblock.nft"
+
+readonly MAX_FILE_SIZE=10485760
+readonly MAX_TOTAL_PREFIXES=500000
+
+TEMP_DIR=""
+CANDIDATE=""
+
+info() {
+    printf '[INFO] %s\n' "$*"
+}
+
+error() {
+    printf '[ERROR] %s\n' "$*" >&2
+}
+
+cleanup() {
+    rm -rf -- "$TEMP_DIR"
+
+    if [[ -n "$CANDIDATE" ]]; then
+        rm -f -- "$CANDIDATE"
+    fi
+}
+
+download_country_lists() {
+    info "Downloading GeoBlock country lists"
+
+    local country family file url status size
+
+    for country in "${COUNTRIES[@]}"; do
+        for family in ipv4 ipv6; do
+            file="$TEMP_DIR/$country.$family"
+            url="$GEO_BLOCKLIST_URL/$country/$country-$family.txt"
+
+            if ! status=$(curl \
+                --silent --show-error --location \
+                --proto '=https' --proto-redir '=https' \
+                --retry 2 --retry-delay 2 \
+                --connect-timeout 10 --max-time 60 \
+                --max-filesize "$MAX_FILE_SIZE" \
+                --output "$file" \
+                --write-out '%{http_code}' \
+                "$url"); then
+
+                error "Download failed: $country ($family)"
+                return 1
+            fi
+
+            # Some countries do not have IPv6 feeds.
+            if [[ "$family" == ipv6 && "$status" == 404 ]]; then
+                : > "$file"
+                continue
+            fi
+
+            if [[ "$status" != 200 || ! -s "$file" ]]; then
+                error "Invalid feed: $country ($family), HTTP $status"
+                return 1
+            fi
+
+            size=$(wc -c < "$file")
+
+            if (( size > MAX_FILE_SIZE )); then
+                error "Feed exceeds size limit: $country ($family)"
+                return 1
+            fi
+        done
+    done
+
+    info "Country lists downloaded"
+}
+
+normalize_feeds() {
+    local family="$1"
+
+    if ! LC_ALL=C awk -v family="$family" '
+
+        {
+            sub(/\r$/, "")
+        }
+
+        /^[[:space:]]*(#|$)/ {
+            next
+        }
+
+        {
+            split($0, cidr, "/")
+
+            if (family == "ipv4") {
+                if ($0 !~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/[0-9]+$/ ||
+                    cidr[2] > 32) {
+                    invalid = 1
+                    next
+                }
+            } else {
+                if ($0 !~ /^[[:xdigit:]:]+\/[0-9]+$/ ||
+                    cidr[2] > 128) {
+                    invalid = 1
+                    next
+                }
+            }
+
+            if (++count > 500000) {
+                invalid = 1
+                next
+            }
+
+            print
+        }
+
+        END {
+            if (invalid)
+                exit 1
+        }
+
+    ' "$TEMP_DIR"/*."$family" |
+        LC_ALL=C sort -u > "$TEMP_DIR/$family"; then
+
+        error "Invalid or excessive $family feed data"
+        return 1
+    fi
+}
+
+generate_geoblock_ruleset() {
+    info "Generating GeoBlock ruleset"
+
+    normalize_feeds ipv4 1
+    normalize_feeds ipv6 0
+
+    local ipv4_count ipv6_count
+
+    ipv4_count=$(wc -l < "$TEMP_DIR/ipv4")
+    ipv6_count=$(wc -l < "$TEMP_DIR/ipv6")
+
+    if (( ipv4_count == 0 ||
+          ipv4_count + ipv6_count > MAX_TOTAL_PREFIXES )); then
+
+        error "Unexpected total prefix count"
+        return 1
+    fi
+
+    info "IPv4 prefixes: $ipv4_count"
+    info "IPv6 prefixes: $ipv6_count"
+
+    {
+        cat <<'NFT'
+destroy table inet geoblock
+
+table inet geoblock {
+    set block4 {
+        type ipv4_addr
+        flags interval
+        auto-merge
+        elements = {
+NFT
+
+        awk '
+            NR > 1 { printf ",\n" }
+            { printf "            %s", $0 }
+            END { print "" }
+        ' "$TEMP_DIR/ipv4"
+
+        cat <<'NFT'
+        }
+    }
+
+    set block6 {
+        type ipv6_addr
+        flags interval
+        auto-merge
+        elements = {
+NFT
+
+        awk '
+            NR > 1 { printf ",\n" }
+            { printf "            %s", $0 }
+            END { print "" }
+        ' "$TEMP_DIR/ipv6"
+
+        cat <<'NFT'
+        }
+    }
+
+    chain input {
+        type filter hook input priority -1; policy accept;
+        ip saddr @block4 drop
+        ip6 saddr @block6 drop
+    }
+
+    chain output {
+        type filter hook output priority -1; policy accept;
+        ip daddr @block4 drop
+        ip6 daddr @block6 drop
+    }
+
+    chain forward {
+        type filter hook forward priority -1; policy accept;
+        ip saddr @block4 drop
+        ip daddr @block4 drop
+        ip6 saddr @block6 drop
+        ip6 daddr @block6 drop
+    }
+}
+NFT
+
+    } > "$TEMP_DIR/geoblock.nft"
+
+    info "GeoBlock ruleset generated"
+}
+
+install_geoblock_ruleset() {
+    info "Validating and applying GeoBlock ruleset"
+
+    mkdir -p "$NFT_DIR"
+
+    # Stage inside /etc/nftables for correct SELinux access.
+    CANDIDATE=$(mktemp "$NFT_DIR/.geoblock.XXXXXX")
+
+    install -m 644 "$TEMP_DIR/geoblock.nft" "$CANDIDATE"
+
+    restorecon "$NFT_DIR" "$CANDIDATE"
+
+    # Validate without modifying the running firewall.
+    if ! nft -c -f "$CANDIDATE"; then
+        error "nftables validation failed"
+        return 1
+    fi
+
+    # Skip applying identical rules when the table is already loaded.
+    if [[ -f "$NFT_FILE" ]] &&
+       cmp -s "$CANDIDATE" "$NFT_FILE"; then
+
+        if nft list table inet geoblock >/dev/null 2>&1; then
+            rm -f "$CANDIDATE"
+            CANDIDATE=""
+
+            info "GeoBlock ruleset unchanged"
+            return 0
+        fi
+
+        # The configuration exists, but its table is not loaded.
+        if ! nft -f "$CANDIDATE"; then
+            error "Failed to load GeoBlock ruleset"
+            return 1
+        fi
+
+        rm -f "$CANDIDATE"
+        CANDIDATE=""
+
+        info "GeoBlock ruleset loaded"
+        return 0
+    fi
+
+    # nftables applies the complete file as one transaction.
+    if ! nft -f "$CANDIDATE"; then
+        error "Failed to apply GeoBlock ruleset"
+        return 1
+    fi
+
+    # Persist the successfully applied configuration.
+    if ! mv -f -- "$CANDIDATE" "$NFT_FILE"; then
+        error "Failed to install GeoBlock configuration"
+        return 1
+    fi
+
+    CANDIDATE=""
+
+    info "GeoBlock ruleset installed successfully"
+}
+
+main() {
+    if (( EUID != 0 )); then
+        error "This updater must run as root"
+        exit 1
+    fi
+
+    local cmd
+
+    for cmd in curl awk sort wc nft install cmp mktemp restorecon; do
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            error "Required command not found: $cmd"
+            exit 1
+        fi
+    done
+
+    TEMP_DIR=$(mktemp -d)
+    trap cleanup EXIT
+
+    info "Starting GeoBlock update"
+
+    download_country_lists
+    generate_geoblock_ruleset
+    install_geoblock_ruleset
+
+    info "GeoBlock update completed"
+}
+
+main "$@"

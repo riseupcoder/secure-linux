@@ -2,6 +2,7 @@
 
 readonly CONFIG_DIR="$ROOT_DIR/config"
 readonly SCRIPTS_DIR="$ROOT_DIR/scripts"
+readonly LIBEXEC_DIR="$ROOT_DIR/libexec"
 #readonly LIB_DIR="$ROOT_DIR/lib"
 
 TEMP_DIR=""

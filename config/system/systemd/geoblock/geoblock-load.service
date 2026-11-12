@@ -1,0 +1,39 @@
+[Unit]
+Description=Load GeoBlock nftables rules
+Wants=firewalld.service
+After=firewalld.service
+ConditionPathExists=/etc/nftables/geoblock.nft
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nft -f /etc/nftables/geoblock.nft
+
+CapabilityBoundingSet=CAP_NET_ADMIN
+
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectHostname=yes
+
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+KeyringMode=private
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

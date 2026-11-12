@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+umask 077
+
+readonly BLOCKLIST_DIR="/etc/NetworkManager/dnsmasq.d"
+readonly ULTIMATE_FILE="$BLOCKLIST_DIR/99-hagezi-ultimate.conf"
+readonly TIF_FILE="$BLOCKLIST_DIR/99-hagezi-tif.conf"
+
+readonly BASE_URL="https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/dnsmasq"
+readonly ULTIMATE_URL="$BASE_URL/ultimate.txt"
+readonly TIF_URL="$BASE_URL/tif.txt"
+
+readonly MAX_FILE_SIZE=104857600
+
+TEMP_DIR=""
+
+info() {
+    printf '[INFO] %s\n' "$*"
+}
+
+error() {
+    printf '[ERROR] %s\n' "$*" >&2
+}
+
+cleanup() {
+    [[ -n "$TEMP_DIR" ]] && rm -rf -- "$TEMP_DIR"
+}
+
+download_feed() {
+    local url="$1"
+    local file="$2"
+
+    curl \
+        --silent --show-error --fail --location \
+        --proto '=https' --proto-redir '=https' \
+        --retry 3 --retry-delay 2 \
+        --connect-timeout 15 --max-time 300 \
+        --max-filesize "$MAX_FILE_SIZE" \
+        --output "$file" \
+        "$url"
+
+    [[ -s "$file" ]] || {
+        error "Downloaded feed is empty"
+        return 1
+    }
+}
+
+validate_feed() {
+    local file="$1"
+
+    # Allow only HaGeZi DNSMasq local-domain rules.
+    if ! LC_ALL=C awk '
+        /^[[:space:]]*#/ || /^[[:space:]]*$/ {
+            next
+        }
+
+        {
+            sub(/\r$/, "")
+
+            if ($0 !~ /^local=\/[[:alnum:].-]+\/$/) {
+                invalid = 1
+                next
+            }
+
+            domain = substr($0, 8, length($0) - 8)
+
+            if (length(domain) > 253) {
+                invalid = 1
+                next
+            }
+
+            labels = split(domain, parts, ".")
+
+            if (labels < 2) {
+                invalid = 1
+                next
+            }
+
+            for (i = 1; i <= labels; i++) {
+                if (length(parts[i]) > 63 ||
+                    parts[i] !~ /^[[:alnum:]]([[:alnum:]-]*[[:alnum:]])?$/) {
+                    invalid = 1
+                    break
+                }
+            }
+
+            count++
+        }
+
+        END {
+            if (invalid || count == 0)
+                exit 1
+        }
+    ' "$file"; then
+        error "Invalid DNSMasq feed: $file"
+        return 1
+    fi
+
+    # Let dnsmasq validate its own configuration syntax.
+    if ! dnsmasq --test --conf-file="$file" >/dev/null; then
+        error "DNSMasq validation failed: $file"
+        return 1
+    fi
+}
+
+main() {
+    if (( EUID != 0 )); then
+        error "This updater must run as root"
+        exit 1
+    fi
+
+    local cmd
+
+    for cmd in curl awk dnsmasq nmcli mktemp install cmp mv rm chmod; do
+        command -v "$cmd" >/dev/null 2>&1 || {
+            error "Required command not found: $cmd"
+            exit 1
+        }
+    done
+
+    install -d -m 755 "$BLOCKLIST_DIR"
+
+    TEMP_DIR=$(mktemp -d "$BLOCKLIST_DIR/.hagezi.XXXXXX")
+    trap cleanup EXIT
+
+    info "Downloading HaGeZi Ultimate"
+    download_feed "$ULTIMATE_URL" "$TEMP_DIR/ultimate.conf"
+
+    info "Downloading HaGeZi TIF"
+    download_feed "$TIF_URL" "$TEMP_DIR/tif.conf"
+
+    info "Validating HaGeZi feeds"
+    validate_feed "$TEMP_DIR/ultimate.conf"
+    validate_feed "$TEMP_DIR/tif.conf"
+
+    chmod 644 "$TEMP_DIR/ultimate.conf" "$TEMP_DIR/tif.conf"
+
+    local changed=0
+
+    if ! cmp -s "$TEMP_DIR/ultimate.conf" "$ULTIMATE_FILE" 2>/dev/null; then
+        mv -f -- "$TEMP_DIR/ultimate.conf" "$ULTIMATE_FILE"
+        changed=1
+    fi
+
+    if ! cmp -s "$TEMP_DIR/tif.conf" "$TIF_FILE" 2>/dev/null; then
+        mv -f -- "$TEMP_DIR/tif.conf" "$TIF_FILE"
+        changed=1
+    fi
+
+    if (( changed )); then
+        info "Reloading NetworkManager DNS plugin"
+
+        nmcli general reload dns-full
+
+        info "HaGeZi blocklists updated successfully"
+    else
+        info "HaGeZi blocklists are already up to date"
+    fi
+}
+
+main "$@"

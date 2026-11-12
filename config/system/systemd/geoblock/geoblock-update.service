@@ -1,0 +1,38 @@
+[Unit]
+Description=Update GeoBlock IP lists
+Wants=network-online.target
+After=network-online.target firewalld.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/geoblock-update
+
+UMask=0077
+
+NoNewPrivileges=yes
+
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateIPC=yes
+
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/nftables
+
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+ProtectHostname=yes
+
+RestrictNamespaces=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+
+MemoryDenyWriteExecute=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+KeyringMode=private

@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily HaGeZi DNS blocklist update
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+RandomizedDelaySec=15m
+AccuracySec=1min
+
+Unit=hagezi-update.service
+
+[Install]
+WantedBy=timers.target

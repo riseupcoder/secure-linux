@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily GeoBlock IP list update
+Wants=geoblock-load.service
+After=geoblock-load.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=15m
+Unit=geoblock-update.service
+
+[Install]
+WantedBy=timers.target
