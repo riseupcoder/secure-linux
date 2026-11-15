@@ -33,7 +33,7 @@ build_pipewire() {
       -Dpipewire-alsa=disabled \
       -Dpipewire-jack=disabled \
       -Dpipewire-v4l2=disabled \
-      -Dsession-managers=wireplumber \
+      -Dsession-managers=[] \
       -Dgstreamer=disabled \
       -Dffmpeg=disabled \
       -Dbluez5=disabled \
@@ -123,7 +123,12 @@ build_pipewire() {
   install_packages "${PW_RUNTIME_PACKAGES[@]}"
 
   # create necessary dirs before enabling systemd user service for pipewire and wireplumber
-  mkdir -p "$HOME/.config/systemd/user/default.target.wants/" "$HOME/.config/systemd/user/sockets.target.wants/" "$HOME/.config/systemd/user/pipewire.service.wants/"
+  local SYSTEMD_USER_DIR="$HOME/.config/systemd/user"
+
+  mkdir -p \
+    "$SYSTEMD_USER_DIR/default.target.wants" \
+    "$SYSTEMD_USER_DIR/sockets.target.wants" \
+    "$SYSTEMD_USER_DIR/pipewire.service.wants"
 
   # Reload and enable PipeWire user services
   systemctl --user daemon-reload

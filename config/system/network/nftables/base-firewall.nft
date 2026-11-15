@@ -1,0 +1,30 @@
+# Remove only our own table when reloading.
+destroy table inet base_firewall
+
+table inet base_firewall {
+
+    chain input {
+        type filter hook input priority 0;
+        policy drop;
+
+        # Allow localhost.
+        iifname "lo" accept
+
+        # Allow replies to outgoing connections.
+        ct state established,related accept
+
+        # Drop invalid packets.
+        ct state invalid drop
+    }
+
+    chain forward {
+        type filter hook forward priority 0;
+        policy drop;
+    }
+
+    chain output {
+        type filter hook output priority 0;
+        policy accept;
+    }
+}
+

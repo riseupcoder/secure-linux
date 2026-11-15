@@ -1,7 +1,5 @@
 [Unit]
 Description=Daily GeoBlock IP list update
-Wants=geoblock-load.service
-After=geoblock-load.service
 
 [Timer]
 OnCalendar=daily

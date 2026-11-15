@@ -14,17 +14,12 @@ source "$LIB_DIR/selinux.sh"
 
 readonly SETUP_SCRIPTS=(
     "scripts/setup_doas.sh:setup_doas"
-    "scripts/misc/system/debloat_fedora.sh:debloat_fedora"
     "scripts/security/setup_harden_system.sh:setup_harden_system"
-    "scripts/security/remove_suid.sh:remove_setuid"
+    "scripts/security/setup_harden_network.sh:setup_harden_network"
     "scripts/setup_uki.sh:setup_uki"
-    "scripts/misc/custom_pkg_build/build_dwl.sh:build_dwl"
-    "scripts/misc/custom_pkg_build/build_wlroots.sh:build_wlroots"
-    "scripts/misc/custom_pkg_build/build_pipewire.sh:build_pipewire"
+    "scripts/build/custom/build_custom_packages.sh:build_custom_packages"
     "scripts/setup_desktop.sh:setup_desktop"
-    "scripts/security/selinux/setup_harden_selinux.sh:setup_harden_selinux"
-    "scripts/security/selinux/setup_custom_sepolicy.sh:setup_custom_sepolicy"
-    "scripts/security/selinux/setup_selinux_users.sh:setup_selinux_users"
+    "scripts/security/selinux/setup_selinux.sh:setup_selinux"
 #    "scripts/kernel/setup_harden_kernel.sh:setup_harden_kernel"
 )
 

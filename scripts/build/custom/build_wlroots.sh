@@ -21,7 +21,7 @@ build_wlroots() {
     tag=$(git tag -l "0.20.*" | sort -Vr | head -n1)
 
     info "Cloning and checking out tag: $tag"
-    git checkout $tag
+    git checkout "$tag"
 
     # Configure with Meson for a minimal, secure build
     CFLAGS="-march=native" CXXFLAGS="-march=native" meson setup \

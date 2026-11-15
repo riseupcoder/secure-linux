@@ -1,11 +1,13 @@
 [Unit]
 Description=Update GeoBlock IP lists
 Wants=network-online.target
-After=network-online.target firewalld.service
+After=network-online.target nftables.service
 
 [Service]
 Type=oneshot
 ExecStart=/usr/local/libexec/geoblock-update
+
+TimeoutStartSec=10min
 
 UMask=0077
 

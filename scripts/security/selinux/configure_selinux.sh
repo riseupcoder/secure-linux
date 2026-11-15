@@ -4,6 +4,7 @@ set -euo pipefail
 
 source "$CONFIG_DIR/system/selinux/sebool.conf"
 readonly SELINUX_DIR="$SCRIPTS_DIR/security/selinux"
+readonly SEPOLICY_REPO="https://github.com/riseupcoder/selinux-policy"
 
 harden_userns() {
     info "Installing harden userns SELinux policy"
@@ -52,10 +53,36 @@ harden_sebool() {
     done
 }
 
-setup_harden_selinux() {
+install_custom_sepolicies() {
+
+  install_packages git selinux-policy-devel
+
+  create_temp_directory
+
+  git clone "$SEPOLICY_REPO" "$TEMP_DIR/selinux-policy"
+
+  (
+      cd "$TEMP_DIR/selinux-policy"
+
+      doas cp "wayland/wayland.if" "dwl/dwl.if" "seatd/seatd.if" /usr/share/selinux/devel/include/distributed/
+      doas chmod 444 /usr/share/selinux/devel/include/distributed/*
+
+      install_selinux_policy wayland wayland 
+      install_selinux_policy seatd seatd 
+      install_selinux_policy dwl dwl
+      install_selinux_policy dwl_roles dwl
+  )
+
+  remove_temp_directory
+
+  success "Custom selinux policy installed"
+}
+
+configure_selinux() {
     harden_userns
     deny_sockets
     harden_sebool
+    install_custom_sepolicies
 
     success "SELinux configuration completed"
 }

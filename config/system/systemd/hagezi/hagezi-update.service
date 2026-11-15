@@ -1,7 +1,7 @@
 [Unit]
 Description=Update HaGeZi DNS blocklists
-Wants=network-online.target NetworkManager.service
-After=network-online.target NetworkManager.service
+Wants=network-online.target
+After=network-online.target
 
 ConditionPathIsDirectory=/etc/NetworkManager/dnsmasq.d
 

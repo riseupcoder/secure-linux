@@ -22,7 +22,6 @@ setup_custom_sepolicy() {
       install_selinux_policy seatd seatd 
       install_selinux_policy dwl dwl
       install_selinux_policy dwl_roles dwl
-      install_selinux_policy user_dwl dwl
   )
 
   remove_temp_directory
