@@ -9,60 +9,82 @@
 [![SELinux](https://img.shields.io/badge/SELinux-Hardening-red.svg)](https://selinuxproject.github.io/)
 [![OpenDoas](https://img.shields.io/badge/Privilege%20Escalation-OpenDoas-blue.svg)](https://github.com/Duncaen/OpenDoas)
 
-</div> 
+</div>
 
 ## Description
 
-**secure-linux** is a hands-on approach to building a hardened Linux system from the ground up.
+**secure-linux** is a hands-on project for building and hardening a Linux system from the ground up, with security and system control at its core.
 
-The project takes a layered approach to security: remove what is unnecessary, reduce what is privileged, confine what can be confined, and harden the components that remain. It covers everything from replacing sudo with OpenDoas and reducing the system footprint to kernel hardening, SUID/SGID reduction, hardened memory allocation, systemd service sandboxing, and SELinux confinement.
+It follows a layered security approach: minimize the system footprint, eliminate unnecessary privileges, restrict network exposure, harden system services, and enforce mandatory access controls.
 
-The idea behind secure-linux is simple: **security should be something you understand, control, and build for yourself**. Instead of relying entirely on distribution defaults or a security-focused operating system, this project gives you the building blocks to understand what is happening on your system and make those decisions yourself.
+Through modular Bash scripts and carefully maintained configuration files, the project brings together multiple layers of Linux security, including account and kernel hardening, SELinux policy enforcement, systemd service sandboxing, host firewalling, DNS filtering, geographic IP blocking, and hardened memory allocation.
 
-**The scripts are not meant to be something you simply run and forget. Take the time to understand what each script changes and why it is there**. The goal is not just to end up with a hardened machine, but to learn enough about Linux security to eventually build and adapt one yourself, based on your own needs and threat model.
+Rather than relying entirely on distribution defaults or preconfigured security solutions, **secure-linux gives you the building blocks to understand, customize, and control your system's security posture.**
 
-With the growing number of vulnerabilities and AI-assisted attacks, knowing how to secure the systems we rely on is becoming increasingly important. **secure-linux is my attempt to learn that process, put it into practice, and share what I learn along the way**.
+**This project is not intended to be something you simply run and forget.** Every script and configuration exists for a reason. Take the time to understand what it changes, why it matters, and how it affects your system.
 
+The goal extends beyond building a hardened machine: **it's about developing the knowledge and practical experience to secure, maintain, and adapt a Linux system according to your own requirements and threat model.**
+
+**secure-linux is my journey into Linux security, turning what I learn into practical implementations and sharing that knowledge along the way.**
 
 ## Features
 
-- **Privilege Separation** — Removes `sudo` and replaces it with OpenDoas as the primary privilege-escalation mechanism.
-- **System Minimization** — Further debloats a minimal Linux installation by removing unnecessary packages and components.
-- **Account Hardening** — Disables direct root login, restricts `su`, and increases password hashing rounds to `65536`.
-- **Kernel Hardening** — Hardens kernel configuration and disables unnecessary kernel modules to reduce the system's kernel attack surface.
-- **Hardened Memory Allocation** — Replaces the default memory allocator with GrapheneOS hardened_malloc and enables its default variant.
-- **Service Sandboxing** — Applies systemd sandboxing restrictions to NetworkManager.
-- **SUID/SGID Reduction** — Removes unnecessary SUID/SGID privileges from host binaries while retaining `doas` for controlled privilege transitions.
+### System Hardening
+
+- **Privilege Management** — Replaces `sudo` with OpenDoas, providing a minimal and streamlined mechanism for controlled administrative privilege escalation.
+- **System Minimization** — A lean Fedora installation with unnecessary packages and components stripped away.
+- **Account Security** — Restricted root access, controlled `su` privileges, secure default file permissions, and stronger password hashing.
+- **Kernel Hardening** — Hardened kernel parameters, restricted kernel modules, and protected sensitive system directories.
+- **Memory Corruption Protection** — GrapheneOS hardened_malloc with its default security configuration for stronger heap memory protection.
+- **SUID/SGID Privilege Reduction** — Unnecessary elevated privileges removed while preserving essential exceptions and required capabilities.
 - **Unified Kernel Image**: Transitions the system to a UKI-based boot architecture with customized kernel installation and boot configuration.
-- **Minimal Userspace**: Installs a lean set of essential packages for graphics, audio, and container workloads.
-- **SELinux Hardening** — Installs custom SELinux policies for user namespace restrictions, legacy socket restrictions, and hardens selected SELinux booleans.
-- **SELinux User Confinement** — Maps the everyday user to user_u and creates a separate administrative account for privileged tasks.
 - **Custom Hardened Kernel** — Builds a kernel tailored to your system with the Anthraxx linux-hardened patch set applied.
 
-### Prerequisites
+### Network Security
 
-- Intermediate Linux knowledge
-- Basic SELinux knowledge
+- **Default-Deny Firewall** — Enforces strict inbound and forwarding traffic policies through stateful nftables filtering.
+- **Country-Level IP Blocking** — Blocks entire countries at the network level using IPv4 and IPv6 address ranges.
+- **Advanced DNS Threat Protection** — Combines HaGeZi Ultimate and Threat Intelligence Feeds (TIF) to block ads, trackers, telemetry, phishing, malware, scams, fraudulent domains, cryptojacking, and other internet threats.
+- **DNS Privacy & Control** — Centralizes DNS resolution through Unbound, providing control over upstream DNS forwarding and local name resolution.
+- **Network Configuration Hardening** — Restricts unwanted DNS configuration changes and strengthens NetworkManager service security.
+- **Automatic Threat Intelligence Updates** — Automatically refreshes country-level IP blocklists and DNS threat feeds daily, keeping network defenses current against changing threats, malicious domains, and emerging security risks.
 
-You should be comfortable working with Linux permissions, users and groups, package management, kernel configuration, kernel modules,  and Basic SELinux concepts.
+### SELinux Hardening
+
+- **SELinux User Namespace Isolation** — Prevents untrusted processes from exploiting user namespaces to gain elevated privileges.
+- **Socket Attack Surface Reduction** — Restricts unnecessary and potentially risky socket families, including packet radio, IPsec, ALG, and other obscure socket interfaces.
+- **Custom SELinux Confinement** — Extends mandatory access control with dedicated policies for Wayland, dwl, and seatd.
+- **SELinux Policy Hardening** — Enforces restrictive SELinux boolean settings to limit unnecessary system privileges.
+- **Privileged User Isolation** — Keeps everyday user activity confined while reserving administrative privileges for a separate account.
+
+### Service Hardening
+
+- **Systemd Sandboxing** — Applies additional restrictions to selected system services to reduce their privileges and available attack surface.
+
+## Prerequisites
+
+- Intermediate Linux knowledge.
+- Basic Bash scripting knowledge.
+- Familiarity with Linux permissions, users and groups, systemd, and package management.
+- Basic understanding of SELinux and Linux networking.
 
 ## Requirements
 
-- Fedora Minimal System
-- Internet connection
+- Fedora Minimal installation.
+- Internet connection.
 
 ## Getting Started
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/riseupcoder/secure-linux
+git clone https://github.com/riseupcoder/secure-linux.git
 cd secure-linux
 ./install.sh
 ```
 
 ## Questions & Discussions
-Have questions about a script, want to understand a security decision, or have an idea for the project? Open a Discussion.
+Have questions about a script, want to understand a security decision, or have an idea for the project? Open a Discussion. 
 
 ## License
 
