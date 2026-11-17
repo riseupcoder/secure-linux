@@ -32,16 +32,16 @@ setup_admin_user() {
     if ! id "$ADMIN_USER" >/dev/null 2>&1; then
         info "Creating administration user"
 
-        doas useradd -m -G wheel "$ADMIN_USER"
+        # doas useradd -m -G wheel "$ADMIN_USER"
+
+        info "Mapping admin user to sysadm_u"
+
+        doas useradd -Z sysadm_u "$ADMIN_USER"
 
         doas passwd "$ADMIN_USER"
     fi
 
-    info "Mapping admin user to sysadm_u"
-
     doas semanage user -m -R "sysadm_r" sysadm_u
-
-    doas semanage login -a -s sysadm_u "$ADMIN_USER"
 
     doas grep -q "permit persist $ADMIN_USER" /etc/doas.conf ||
         echo "permit persist $ADMIN_USER" |

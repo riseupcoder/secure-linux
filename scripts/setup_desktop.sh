@@ -16,52 +16,7 @@ install_desktop_packages() {
     success "Desktop packages configured"
 }
 
-install_font() {
-    local font_dir="$HOME/.local/share/fonts"
-    local tmp_dir archive url digest
-    
-    install_packages unzip
-
-    mkdir -p "$font_dir"
-
-    create_temp_directory
-
-    read -r url digest < <(
-        curl -fsSL --retry 3 \
-            https://api.github.com/repos/googlefonts/googlesans-code/releases/latest |
-            jq -er '
-                .assets[]
-                | select(.name | test("^GoogleSansCode-v[0-9.]+\\.zip$"))
-                | [.browser_download_url, .digest]
-                | @tsv
-            '
-    )
-
-    archive="$TEMP_DIR/archive.zip"
-
-    curl -fsSL --retry 3 -o "$archive" "$url"
-
-    printf '%s  %s\n' "${digest#sha256:}" "$archive" |
-        sha256sum -c -
-
-    unzip -jo "$archive" '*.ttf' -d "$TEMP_DIR" >/dev/null
-
-    install -Dm644 "$TEMP_DIR/GoogleSansCode[MONO,wght].ttf" \
-        "$font_dir/google_sans_code.ttf"
-
-    chmod 400 "$font_dir/google_sans_code.ttf"
-
-    restorecon -Rv -F "$font_dir"
-
-    fc-cache -f "$font_dir"
-
-    remove_packages unzip
-
-    remove_temp_directory
-}
-
 setup_desktop() {
     install_desktop_packages
-    install_font
     success "Desktop setup completed"
 }

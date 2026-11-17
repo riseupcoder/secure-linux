@@ -2,31 +2,6 @@
 
 set -euo pipefail
 
-setup_nftables() {
-    info "Setting up nftables"
-
-    install_packages nftables nftables-services
-
-    # Install base firewall rules.
-    doas install -Dm644 -C \
-        "$CONFIG_DIR/system/network/nftables/base-firewall.nft" \
-        /etc/nftables/base-firewall.nft
-
-    # Include base firewall rules.
-    doas grep -qxF 'include "/etc/nftables/base-firewall.nft"' \
-        /etc/sysconfig/nftables.conf || \
-        echo 'include "/etc/nftables/base-firewall.nft"' |
-            doas tee -a /etc/sysconfig/nftables.conf >/dev/null
-
-    # Include GeoBlock rules.
-    doas grep -qxF 'include "/etc/nftables/geoblock.nft"' \
-        /etc/sysconfig/nftables.conf || \
-        echo 'include "/etc/nftables/geoblock.nft"' |
-            doas tee -a /etc/sysconfig/nftables.conf >/dev/null
-
-    success "nftables configured"
-}
-
 setup_geoblock() {
     info "Setting up GeoBlock"
 
@@ -50,19 +25,43 @@ setup_geoblock() {
     success "GeoBlock configured"
 }
 
+setup_nftables() {
+    info "Setting up nftables"
+
+    doas install -Dm644 -C \
+        "$CONFIG_DIR/system/network/nftables/base-firewall.nft" \
+        /etc/nftables/base-firewall.nft
+
+    local includes=(
+        "/etc/nftables/base-firewall.nft"
+        "/etc/nftables/geoblock.nft"
+    )
+
+    for f in "${includes[@]}"; do
+        local line="include \"$f\""
+        doas grep -qxF "$line" /etc/sysconfig/nftables.conf || \
+            echo "$line" | doas tee -a /etc/sysconfig/nftables.conf >/dev/null
+    done
+
+    # We no longer need firewalld so remove it
+    doas systemctl disable --now firewalld.service
+    remove_packages firewalld*
+
+    # Removing firewalld also removes nftables packages, so reinstall nftables.   
+    install_packages nftables nftables-services
+
+    # Load base firewall and GeoBlock rules.
+    doas systemctl enable --now nftables.service
+
+    success "nftables configured and loaded"
+}
+
 setup_hagezi_blocklist() {
     info "Setting up HaGeZi DNS blocklists"
 
-    install_packages dnsmasq curl
-
-    # Configure NetworkManager to use dnsmasq.
-    doas install -Dm644 /dev/stdin \
-        /etc/NetworkManager/conf.d/00-use-dnsmasq.conf <<'EOF'
-[main]
-dns=dnsmasq
-EOF
-
-    doas install -d -m 755 /etc/NetworkManager/dnsmasq.d
+    install_packages curl
+ 
+    doas mkdir -p /etc/dnsmasq.d/
 
     # Install independent updater.
     doas install -Dm755 -C \
@@ -104,14 +103,9 @@ setup_unbound() {
         "$CONFIG_DIR/system/systemd/unbound/hardening.conf" \
         /etc/systemd/system/unbound.service.d/hardening.conf
 
-    # Forward dnsmasq queries to Unbound.
-    doas install -Dm644 /dev/stdin \
-        /etc/NetworkManager/dnsmasq.d/upstream.conf <<'EOF'
-no-resolv
-server=127.0.0.1#5353
-EOF
-
     # Configure SELinux for Unbound's custom DNS port.
+    install_packages policycoreutils-python-utils
+
     doas semanage port -a -t dns_port_t -p tcp 5353
     doas semanage port -a -t dns_port_t -p udp 5353
 
@@ -121,41 +115,39 @@ EOF
 
     doas systemctl enable --now unbound.socket
 
-    doas systemctl restart NetworkManager
-
     success "Unbound DNS forwarder configured"
 }
 
-configure_network_dns() {
-    info "Configuring NetworkManager DNS priorities"
+setup_dnsmasq() {
+    info "Configuring dnsmasq"
 
-    local uuid type
+    install_packages dnsmasq curl
 
-    while IFS=: read -r uuid type; do
-        case "$type" in
-            802-3-ethernet|802-11-wireless)
-                doas nmcli connection modify "$uuid" \
-                    ipv4.dns "" \
-                    ipv6.dns "" \
-                    ipv4.ignore-auto-dns yes \
-                    ipv6.ignore-auto-dns yes \
-                    ipv4.dns-priority -100 \
-                    ipv6.dns-priority -100
-                ;;
+    # Configure NetworkManager dns to none.
+    doas install -Dm644 /dev/stdin \
+        /etc/NetworkManager/conf.d/00-use-dnsmasq.conf <<'EOF'
+[main]
+dns=none
+EOF
 
-            wireguard)
-                doas nmcli connection modify "$uuid" \
-                    ipv4.dns "" \
-                    ipv6.dns "" \
-                    ipv4.ignore-auto-dns yes \
-                    ipv6.ignore-auto-dns yes \
-                    ipv4.dns-priority 100 \
-                    ipv6.dns-priority 100
-                ;;
-        esac
-    done < <(nmcli -t -f UUID,TYPE connection show --active)
+    doas rm -rf /etc/resolv.conf
+    echo "nameserver 127.0.0.1" | doas tee /etc/resolv.conf
+    doas chmod 644 /etc/resolv.conf
 
-    success "NetworkManager DNS priorities configured"
+    # Forward dnsmasq queries to Unbound.
+    doas install -Dm644 /dev/stdin \
+        /etc/dnsmasq.conf <<'EOF'
+listen-address=127.0.0.1
+port=53
+no-resolv
+cache-size=10000
+server=127.0.0.1#5353
+conf-dir=/etc/dnsmasq.d/,*.conf
+EOF
+
+    doas systemctl enable --now dnsmasq.service
+
+    success "dnsmasq configured"
 }
 
 setup_harden_network() {
@@ -163,20 +155,13 @@ setup_harden_network() {
 
     info "Applying network hardening"
 
-    setup_nftables
     setup_geoblock
+    setup_nftables
 
-    # remove firewalld
-    doas systemctl disable --now firewalld.service
-    remove_packages firewalld*
-
-    # Load base firewall and GeoBlock rules.
-    doas systemctl enable --now nftables.service
+    setup_unbound
+    setup_dnsmasq
 
     setup_hagezi_blocklist
-    setup_unbound
-    configure_network_dns
 
     success "Network hardening complete"
 }
-

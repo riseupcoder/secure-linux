@@ -102,7 +102,7 @@ build_pipewire() {
       --buildtype=release \
       -Dintrospection=disabled \
       -Dsystem-lua=true \
-      -Dsystemd=disabled \
+      -Dsystemd=enabled \
       -Delogind=disabled \
       -Dsystemd-system-service=false \
       -Dsystemd-user-service=true \
@@ -135,6 +135,5 @@ build_pipewire() {
   systemctl --user enable --now pipewire pipewire-pulse wireplumber
   systemctl --user start pipewire pipewire-pulse wireplumber
 
-  success "PipeWire and WirePlumber installed"
+  success "Pipewire, wireplumber and pipewire-pulse installed"
 }
-

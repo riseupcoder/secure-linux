@@ -3,7 +3,7 @@
 set -euo pipefail
 umask 077
 
-readonly BLOCKLIST_DIR="/etc/NetworkManager/dnsmasq.d"
+readonly BLOCKLIST_DIR="/etc/dnsmasq.d"
 readonly ULTIMATE_FILE="$BLOCKLIST_DIR/99-hagezi-ultimate.conf"
 readonly TIF_FILE="$BLOCKLIST_DIR/99-hagezi-tif.conf"
 
@@ -112,7 +112,7 @@ main() {
 
     local cmd
 
-    for cmd in curl awk dnsmasq nmcli mktemp install cmp mv rm chmod; do
+    for cmd in curl dnsmasq; do
         command -v "$cmd" >/dev/null 2>&1 || {
             error "Required command not found: $cmd"
             exit 1
@@ -149,9 +149,9 @@ main() {
     fi
 
     if (( changed )); then
-        info "Reloading NetworkManager DNS plugin"
+        info "Reloading dnsmasq"
 
-        nmcli general reload dns-full
+        systemctl restart dnsmasq.service
 
         info "HaGeZi blocklists updated successfully"
     else
